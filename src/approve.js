@@ -8,7 +8,6 @@
 // descriptions, no labels) is ever shown — a lying "description" field is the
 // oldest wallet-phishing trick there is.
 import * as session from './session.js'
-import { signTyped, signTx, signMessage } from './signer.js'
 import { setRequest } from './store.js'
 
 let current = null // {kind, payload, resolve, reject} — never in React state
@@ -41,20 +40,20 @@ function validate(kind, payload) {
 // settle when the user decides. rpc.js's single-flight guard guarantees at
 // most one of these is pending.
 export function makeSignHandler(kind) {
-  return (payload) =>
-    new Promise((resolve, reject) => {
-      try {
-        validate(kind, payload)
-      } catch (e) {
-        return reject(e)
-      }
-      if (!session.hasJwt()) {
-        return reject(fail('no_session', 'The dashboard has not shared a login session yet.'))
-      }
+  return async (payload) => {
+    validate(kind, payload)
+    if (!session.hasJwt()) {
+      throw fail('no_session', 'The dashboard has not shared a login session yet.')
+    }
+    // Wait for the keeper lookup so an already-unlocked session goes straight
+    // to the approval screen instead of flashing the unlock prompt.
+    await session.ready()
+    return new Promise((resolve, reject) => {
       current = { kind, payload, resolve, reject }
       setRequest({ kind, payload })
       window.focus() // best effort — bring the vault forward for the decision
     })
+  }
 }
 
 // Interactive (non-signing) flows the dashboard can ask for: login,
@@ -87,21 +86,44 @@ export function resolveCurrent(result) {
 export async function approveCurrent() {
   if (!current) return
   const { kind, payload, resolve, reject } = current
-  const w = session.getWallet()
-  if (!w) return // still locked; UI shouldn't offer Approve yet
+  if (!session.isUnlocked()) return // UI shouldn't offer Approve yet
   try {
-    let result
-    if (kind === 'sign_typed') result = await signTyped(w, payload.typed_data)
-    else if (kind === 'sign_tx') result = await signTx(w, payload.tx)
-    else result = { flat: await signMessage(w, payload.message) }
+    // signPayload signs here or in the keeper, whichever holds the key.
+    const result = await session.signPayload(kind, payload)
     current = null
     setRequest(null)
     resolve(result) // ONLY the signature crosses back — never the key
+    scheduleClose()
   } catch (e) {
     current = null
     setRequest(null)
     reject(fail('sign_failed', e?.message || String(e)))
   }
+}
+
+// ---- popup auto-close ------------------------------------------------------
+// A finished approval should get out of the way. The popup closes itself
+// shortly after signing — long enough for the signature to reach the dashboard
+// and for a follow-up request in the same flow (multi-signature actions fire
+// their next step within a second or two) to cancel the close. The key is not
+// lost with the window: the keeper in the dashboard tab holds the session, so
+// the next popup opens already unlocked.
+let closeTimer = null
+
+export function cancelAutoClose() {
+  if (closeTimer) {
+    clearTimeout(closeTimer)
+    closeTimer = null
+  }
+}
+
+function scheduleClose() {
+  cancelAutoClose()
+  if (typeof window === 'undefined' || !window.opener) return
+  closeTimer = setTimeout(() => {
+    closeTimer = null
+    if (!current) window.close()
+  }, 1800)
 }
 
 export function rejectCurrent() {

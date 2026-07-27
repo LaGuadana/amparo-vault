@@ -137,7 +137,7 @@ const secretReady = (me, s, askPassword) => (me.passwordless
   : (askPassword ? !!s.password : true))
 
 // The full setup flow: choose -> generate (key shown once + backup) | import.
-export function OnboardingFlow({ knownPassword, onDone, onCancel }) {
+export function OnboardingFlow({ knownPassword, onDone }) {
   const [me, setMe] = useState(null)
   const [mode, setMode] = useState('choose')
   const [gen, setGen] = useState(null)
@@ -180,17 +180,15 @@ export function OnboardingFlow({ knownPassword, onDone, onCancel }) {
             ? t('Your private key is created or imported here in the vault, encrypted with a PIN or passkey you choose, and only the ciphertext is stored. Neither amparo nor the dashboard ever sees your key.')
             : t('Your private key is created or imported here in the vault, encrypted with your account password, and only the ciphertext is stored. Neither amparo nor the dashboard ever sees your key.')}
         </p>
+        {/* No "not now": a wallet is what the product runs on, and skipping
+            only returned the user to this same screen. Closing the window is
+            the escape, and the dashboard reopens setup when they're ready. */}
         <div className="btnrow">
           <button className="primary" onClick={() => { setErr(null); setGen(generateWallet()); setSaved(false); setMode('generate') }}>
             {t('Generate new wallet')}
           </button>
           <button className="ghost" onClick={() => { setErr(null); setMode('import') }}>{t('Import existing key')}</button>
         </div>
-        {onCancel && (
-          <div className="btnrow">
-            <button className="ghost" onClick={onCancel}>{t('Not now')}</button>
-          </div>
-        )}
       </>
     )
   }

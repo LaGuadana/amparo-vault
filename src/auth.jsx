@@ -172,11 +172,7 @@ export default function AuthFlow({ payload, onDone, onCancel }) {
 
   if (step === 'setup' && verified) {
     return (
-      <OnboardingFlow
-        knownPassword={password || null}
-        onDone={(address) => finish(verified, address)}
-        onCancel={() => finish(verified, null)}
-      />
+      <OnboardingFlow knownPassword={password || null} onDone={(address) => finish(verified, address)} />
     )
   }
 

@@ -145,7 +145,7 @@ function RequestScreen({ request, state }) {
     return <AuthFlow payload={payload} onDone={resolveCurrent} onCancel={rejectCurrent} />
   }
   if (kind === 'setup_wallet') {
-    return <OnboardingFlow knownPassword={null} onDone={(address) => resolveCurrent({ address })} onCancel={rejectCurrent} />
+    return <OnboardingFlow knownPassword={null} onDone={(address) => resolveCurrent({ address })} />
   }
   if (kind === 'confirm_delete') {
     return <DeleteFlow payload={payload} />

@@ -9,32 +9,87 @@
 // holds it anyway — a bearer token for the API, not key material) or is
 // minted here at login and handed TO the dashboard.
 import { api, getApiToken, setApiToken } from './api.js'
-import { unlockWallet } from './signer.js'
+import { unlockWallet, signTyped, signTx, signMessage } from './signer.js'
 import { Wallet } from 'ethers'
 
 let wallet = null // ethers Wallet, vault memory only
 let blob = null   // encrypted blob cache {address, ciphertext, ..., protector, wrap_meta}
 let me = null     // {email, passwordless} cache
 
+// The keeper (keeper.js) holds the unlocked key for the dashboard tab's
+// lifetime, so an approval popup can close itself and the NEXT popup still
+// finds the session unlocked. `keeper` is the client held by a popup;
+// `keeperState` is its last known answer. Both stay empty in a standalone tab,
+// or when no keeper is reachable — then the session is popup-scoped as before.
+let keeper = null
+let keeperState = { unlocked: false, address: null }
+let keeperReady = Promise.resolve(null) // resolves once the lookup has settled
+let host = null // set in the keeper document itself (it IS the key holder)
+
+// Adopt the tab's keeper and bind it to this popup's login session. The keeper
+// answers with its lock state — already unlocked means no prompt for the user.
+export async function attachKeeper(client) {
+  keeper = client
+  keeperState = (await client.bind(getApiToken()).catch(() => null))
+    || { unlocked: false, address: null }
+  return keeperState
+}
+
+// The keeper document registers itself so lock()/isUnlocked() speak for the
+// key it holds rather than for a remote one.
+export function attachKeeperHost(h) {
+  host = h
+}
+
+// A popup defers its first request until the keeper lookup has settled,
+// otherwise a signature could flash the unlock screen for a session that is
+// already unlocked.
+export function claimKeeper(promise) {
+  keeperReady = promise.catch(() => null)
+}
+export const ready = () => keeperReady
+
 export const hasJwt = () => !!getApiToken()
-export const isUnlocked = () => !!wallet
-export const address = () => wallet?.address ?? blob?.address ?? null
+export const isUnlocked = () => !!wallet || keeperState.unlocked || !!host?.state().unlocked
+export const address = () =>
+  wallet?.address ?? keeperState.address ?? host?.state().address ?? blob?.address ?? null
 export const getWallet = () => wallet
+
+// Sign with whichever half of the session holds the key: this document if the
+// user just unlocked here, otherwise the keeper. Only the signature comes back.
+export async function signPayload(kind, payload) {
+  if (wallet) {
+    if (kind === 'sign_typed') return signTyped(wallet, payload.typed_data)
+    if (kind === 'sign_tx') return signTx(wallet, payload.tx)
+    return { flat: await signMessage(wallet, payload.message) }
+  }
+  if (keeper && keeperState.unlocked) return keeper.sign(kind, payload)
+  throw Object.assign(new Error('The vault is locked.'), { code: 'locked' })
+}
 
 export function lock() {
   wallet = null
+  keeperState = { unlocked: false, address: null }
+  host?.lock()
+  keeper?.lock().catch(() => {})
 }
 
-// A different account must never inherit the previous one's state: any JWT
-// change relocks and drops every per-account cache.
+// A different account must never inherit the previous one's state. "Different"
+// means REPLACING a session, not learning one for the first time: a fresh popup
+// starts blank and is told the tab's session on connect, which is not a switch.
+// The keeper enforces the same rule for the key it holds (keeper.js `bind`).
 export function setJwt(next) {
   const token = next || null
-  if (token !== getApiToken()) {
+  const prev = getApiToken()
+  if (prev && token !== prev) {
     lock()
     blob = null
     me = null
   }
   setApiToken(token)
+  if (keeper && token) {
+    keeper.bind(token).then((s) => { keeperState = s }).catch(() => {})
+  }
 }
 
 const fail = (code, message) => Object.assign(new Error(message), { code })
@@ -64,11 +119,21 @@ export async function fetchMe(force = false) {
   return me
 }
 
+// Hand the freshly unlocked key to the keeper so it outlives this popup. Fire
+// and forget: with no keeper the session is simply popup-scoped, as before.
+function shareWithKeeper(privateKey) {
+  if (!keeper) return
+  keeper.adopt(privateKey, getApiToken())
+    .then((s) => { keeperState = s })
+    .catch(() => {})
+}
+
 // Decrypt the cached blob with a secret (password, PIN, or passkey PRF output
 // — all feed the same KDF) and hold the key in vault memory.
 export async function unlockWithSecret(secret) {
   const b = await fetchBlob()
   wallet = await unlockWallet(b, secret)
+  shareWithKeeper(wallet.privateKey)
   return { address: wallet.address }
 }
 
@@ -80,6 +145,7 @@ export function adoptKey(privateKey, expectAddress) {
     throw new Error('key does not match the expected address')
   }
   wallet = w
+  shareWithKeeper(w.privateKey)
   return { address: w.address }
 }
 

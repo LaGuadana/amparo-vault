@@ -43,6 +43,8 @@ export function savePhrase(p) {
   return v
 }
 
+// Also the keeper's change hook: adopting a key or relocking happens outside
+// React, and the store must stay truthful for whatever renders next.
 export function refreshSession() {
   set({ session: { haveJwt: session.hasJwt(), unlocked: session.isUnlocked(), address: session.address() } })
 }
