@@ -1,23 +1,43 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { start, detectMode, PROTOCOL_VERSION } from './rpc.js'
-import { initStore, onRpcEvent } from './store.js'
+import { initStore, onRpcEvent, refreshSession, setStoreLang } from './store.js'
+import { makeSignHandler } from './approve.js'
+import * as session from './session.js'
+import { getLang, setLang } from './i18n.js'
 import App from './App.jsx'
 import './styles.css'
 
-// Step-1 request handlers: liveness + capability discovery. The signing kinds
-// deliberately have NO handler yet — the rpc guards still apply to them, so
-// the protocol's restrictive posture is in force before any key exists here.
+// Request handlers. Signing kinds all route through approve.js, which parks
+// them on the approval UI — nothing signs without a click in this window.
 const mode = detectMode()
 start({
   handlers: {
     ping: async () => ({ pong: true }),
-    status: async () => ({ version: PROTOCOL_VERSION, mode, unlocked: false, address: null }),
+    status: async () => ({
+      version: PROTOCOL_VERSION,
+      mode,
+      unlocked: session.isUnlocked(),
+      address: session.address(),
+    }),
+    // The dashboard shares its login session (the JWT is a bearer token it
+    // holds anyway — never the password). A different JWT relocks the vault
+    // so user B can never sign with user A's key. `lang` seeds the vault's
+    // own language preference (separate origin = separate localStorage).
+    session: async ({ jwt, lang } = {}) => {
+      session.setJwt(jwt)
+      if (lang && setLang(lang)) setStoreLang(lang)
+      refreshSession()
+      return { unlocked: session.isUnlocked(), address: session.address() }
+    },
+    sign_typed: makeSignHandler('sign_typed'),
+    sign_tx: makeSignHandler('sign_tx'),
+    sign_message: makeSignHandler('sign_message'),
   },
   onEvent: onRpcEvent,
 })
 
-initStore(mode)
+initStore(mode, getLang())
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />

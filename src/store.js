@@ -1,6 +1,19 @@
-// Tiny external store bridging rpc events -> React (useSyncExternalStore).
+// Tiny external store bridging vault state -> React (useSyncExternalStore).
 // The RPC server starts before React mounts, so events can never be missed.
-let state = { mode: 'standalone', origin: null, activity: [] }
+// Secrets never enter this store: the unlocked wallet stays in session.js
+// closure; React only learns {unlocked, address}.
+import * as session from './session.js'
+
+let state = {
+  mode: 'standalone',
+  origin: null,
+  activity: [],
+  session: { haveJwt: false, unlocked: false, address: null },
+  // The one request awaiting the user, or null. {kind, payload} only — its
+  // resolve/reject live in approve.js, outside anything React can touch.
+  request: null,
+  lang: 'en',
+}
 const subs = new Set()
 
 export const getState = () => state
@@ -14,8 +27,20 @@ function set(patch) {
   subs.forEach((cb) => cb())
 }
 
-export function initStore(mode) {
-  set({ mode })
+export function initStore(mode, lang) {
+  set({ mode, lang })
+}
+
+export function setStoreLang(lang) {
+  set({ lang })
+}
+
+export function refreshSession() {
+  set({ session: { haveJwt: session.hasJwt(), unlocked: session.isUnlocked(), address: session.address() } })
+}
+
+export function setRequest(request) {
+  set({ request })
 }
 
 export function onRpcEvent(ev) {
