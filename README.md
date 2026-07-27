@@ -82,3 +82,10 @@ npm run build      # dist/ + SRI + integrity.json (commit dist/ with your change
 Origin pairing is derived at runtime from the page's own hostname
 (`vault.<apex>` ⇄ `dashboard.<apex>`; localhost pairs with localhost), so the
 committed production bundle runs unmodified in local development and tests.
+
+## License
+
+[MIT](LICENSE) — the verification story only works if anyone may clone,
+rebuild, and inspect this code, so the vault is genuinely open source. (The
+amparo dashboard and backend are separate, proprietary software; this license
+covers the vault only.)
