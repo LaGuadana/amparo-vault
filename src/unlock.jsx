@@ -1,8 +1,11 @@
-// Protector-aware unlock, shown when a signature is requested while the vault
-// is locked: password (protector 0), PIN (1), or device passkey (2). The
-// secret is used for one decrypt and discarded. Locked-out passwordless users
-// get the backup-key recovery path (onboarding.jsx RecoverPanel).
-import { useEffect, useState } from 'react'
+// Unlock, offering every way in this wallet has (app/api/wallet.py
+// wallet_protectors): a password, a PIN, a passkey per device. Whichever is
+// most convenient here goes first — a passkey needs one tap, so it wins when
+// the platform has one — and the rest sit behind "another way".
+//
+// The secret is used for exactly one decrypt and discarded. Locked-out
+// passwordless users still get backup-key recovery.
+import { useEffect, useMemo, useState } from 'react'
 import * as session from './session.js'
 import { refreshSession } from './store.js'
 import { getWalletPasskeySecret } from './webauthn.js'
@@ -11,13 +14,17 @@ import { RecoverPanel } from './onboarding.jsx'
 import { t } from './i18n.js'
 import { Field, ErrText } from './ui.jsx'
 
-export default function UnlockPanel() {
+export const KIND_NAME = { 0: 'Password', 1: 'PIN', 2: 'Face ID / Touch ID' }
+
+export default function UnlockPanel({ onUnlocked }) {
   const [blob, setBlob] = useState(null)
   const [me, setMe] = useState(null)
-  const [secret, setSecret] = useState('') // password or PIN, per protector
+  const [pickedId, setPickedId] = useState(null)
+  const [secret, setSecret] = useState('')
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
   const [recovering, setRecovering] = useState(false)
+  const [choosing, setChoosing] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -26,12 +33,21 @@ export default function UnlockPanel() {
     return () => { alive = false }
   }, [])
 
-  async function unlockWith(s) {
+  const list = blob?.protectors || []
+  // A passkey is one tap, so prefer it; otherwise first come, first offered.
+  const picked = useMemo(
+    () => list.find((p) => p.id === pickedId) || list.find((p) => p.kind === 2) || list[0] || null,
+    [list, pickedId],
+  )
+
+  async function unlock(p, s) {
     setErr(null)
     setBusy(true)
     try {
-      await session.unlockWithSecret(s)
-      refreshSession() // App re-renders into the approval screen
+      await session.unlockWithProtector(p, s)
+      setSecret('')
+      refreshSession()
+      onUnlocked?.()
     } catch (e) {
       setErr(e?.message || String(e))
     } finally {
@@ -49,32 +65,44 @@ export default function UnlockPanel() {
     )
   }
 
-  if (!blob) {
+  if (!picked) {
     return (
       <>
         <h1>{t('Unlock your wallet')}</h1>
         {err ? <ErrText error={err} /> : <p className="dim">…</p>}
-        {err && (
-          <div className="btnrow">
-            <button className="ghost" onClick={rejectCurrent}>{t('Reject')}</button>
-          </div>
-        )}
+        {err && <div className="btnrow"><button className="ghost" onClick={rejectCurrent}>{t('Reject')}</button></div>}
       </>
     )
   }
 
-  const passwordless = !!me?.passwordless
-  const recoveryLink = passwordless && (
+  const others = list.filter((p) => p.id !== picked.id)
+  const switcher = others.length > 0 && (
+    choosing ? (
+      <div className="ways">
+        {others.map((p) => (
+          <button key={p.id} className="ghost way" onClick={() => { setPickedId(p.id); setChoosing(false); setSecret(''); setErr(null) }}>
+            {p.label || t(KIND_NAME[p.kind] || 'Password')}
+          </button>
+        ))}
+      </div>
+    ) : (
+      <div className="btnrow center">
+        <button className="ghost" onClick={() => setChoosing(true)}>{t('Unlock another way')}</button>
+      </div>
+    )
+  )
+
+  const recovery = me?.passwordless && (
     <div className="btnrow center">
       <button className="ghost" onClick={() => { setRecovering(true); setErr(null) }}>
-        {blob.protector === 2
+        {picked.kind === 2
           ? t('Lost your device? Recover with your backup key')
           : t('Forgot your PIN? Recover with your backup key')}
       </button>
     </div>
   )
 
-  if (blob.protector === 2) {
+  if (picked.kind === 2) {
     return (
       <>
         <h1>{t('Unlock your wallet')}</h1>
@@ -90,9 +118,10 @@ export default function UnlockPanel() {
               setErr(null)
               setBusy(true)
               try {
-                const s = await getWalletPasskeySecret(blob.wrap_meta)
-                await session.unlockWithSecret(s)
+                const s = await getWalletPasskeySecret(picked.wrap_meta)
+                await session.unlockWithProtector(picked, s)
                 refreshSession()
+                onUnlocked?.()
               } catch (e) {
                 setErr(e?.message || String(e))
               } finally {
@@ -104,12 +133,13 @@ export default function UnlockPanel() {
           </button>
           <button className="ghost" onClick={rejectCurrent}>{t('Reject')}</button>
         </div>
-        {recoveryLink}
+        {switcher}
+        {recovery}
       </>
     )
   }
 
-  const isPin = blob.protector === 1
+  const isPin = picked.kind === 1
   return (
     <>
       <h1>{t('Unlock your wallet')}</h1>
@@ -125,16 +155,17 @@ export default function UnlockPanel() {
         autoFocus
         value={secret}
         onChange={(e) => setSecret(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && secret && unlockWith(secret)}
+        onKeyDown={(e) => e.key === 'Enter' && secret && unlock(picked, secret)}
       />
       <ErrText error={err} />
       <div className="btnrow">
-        <button className="primary" disabled={busy || !secret} onClick={() => unlockWith(secret)}>
+        <button className="primary" disabled={busy || !secret} onClick={() => unlock(picked, secret)}>
           {busy ? t('Unlocking…') : t('Unlock')}
         </button>
         <button className="ghost" onClick={rejectCurrent}>{t('Reject')}</button>
       </div>
-      {recoveryLink}
+      {switcher}
+      {recovery}
     </>
   )
 }

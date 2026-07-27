@@ -35,6 +35,34 @@ const es = {
   'Unlocking…': 'Desbloqueando…',
   'Lost your device? Recover with your backup key': '¿Perdiste tu dispositivo? Recupera con tu clave de respaldo',
   'Forgot your PIN? Recover with your backup key': '¿Olvidaste tu PIN? Recupera con tu clave de respaldo',
+  'Unlock another way': 'Desbloquear de otra forma',
+
+  // ways to unlock (protectors.jsx)
+  'Ways to unlock': 'Formas de desbloquear',
+  'Any of these opens your wallet on this device. Add one per device you use — a passkey only works on the device that created it.':
+    'Cualquiera de estas abre tu billetera en este dispositivo. Añade una por cada dispositivo que uses — una llave de acceso solo funciona en el dispositivo que la creó.',
+  Password: 'Contraseña',
+  PIN: 'PIN',
+  'Account password': 'Contraseña de la cuenta',
+  Passkey: 'Llave de acceso',
+  'Face ID / Touch ID on {device}': 'Face ID / Touch ID en {device}',
+  Remove: 'Quitar',
+  'only way in': 'única forma de entrar',
+  'Add Face ID / Touch ID': 'Añadir Face ID / Touch ID',
+  'Add a PIN': 'Añadir un PIN',
+  'Add my password': 'Añadir mi contraseña',
+  'Add PIN': 'Añadir PIN',
+  'Add password': 'Añadir contraseña',
+  'Your account password': 'La contraseña de tu cuenta',
+  'The password you log in with — it will unlock your wallet too.':
+    'La contraseña con la que inicias sesión — también desbloqueará tu billetera.',
+  'At least 6 characters. It never reaches the server and cannot be reset.':
+    'Al menos 6 caracteres. Nunca llega al servidor y no se puede restablecer.',
+  'Face ID / Touch ID added on this device.': 'Face ID / Touch ID añadido en este dispositivo.',
+  'PIN added.': 'PIN añadido.',
+  'Your account password now unlocks this wallet.': 'La contraseña de tu cuenta ya desbloquea esta billetera.',
+  'Removed.': 'Eliminado.',
+  Done: 'Listo',
 
   // approval
   'Signature request': 'Solicitud de firma',

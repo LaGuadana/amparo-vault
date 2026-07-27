@@ -80,6 +80,19 @@ button.ghost:hover:not(:disabled) { color: var(--fg); }
 .toggle-row button { flex: 1; background: transparent; color: var(--fg-dim); font-weight: 500; }
 .toggle-row button.on { background: var(--bg3); color: var(--fg); border-color: var(--fg-dim); font-weight: 600; }
 
+/* ways to unlock */
+.ways { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; }
+.wayrow {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 12.5px;
+}
+.wayrow .dim { font-size: 11px; }
+.wayrow button, .way { padding: 4px 10px; font-size: 11.5px; font-weight: 500; }
+.way { text-align: left; }
+.addrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.addrow button { flex: 1 1 auto; font-size: 12px; }
+.okline { color: var(--green); font-size: 12.5px; margin-top: 12px; }
+
 /* one-time key display */
 .keybox {
   background: var(--bg); border: 1px dashed var(--fg-dim); border-radius: 8px;

@@ -15,6 +15,7 @@ import { decodeTx, decodeTyped } from './decode.js'
 import AuthFlow from './auth.jsx'
 import { OnboardingFlow } from './onboarding.jsx'
 import UnlockPanel from './unlock.jsx'
+import ProtectorsFlow from './protectors.jsx'
 import DeleteFlow from './delete.jsx'
 import { t } from './i18n.js'
 
@@ -149,6 +150,11 @@ function RequestScreen({ request, state }) {
   }
   if (kind === 'confirm_delete') {
     return <DeleteFlow payload={payload} />
+  }
+  // Adding a way in requires re-wrapping the key, so this screen — like
+  // signing — waits behind the unlock panel.
+  if (kind === 'manage_protectors') {
+    return state.session.unlocked ? <ProtectorsFlow /> : <UnlockPanel />
   }
   return state.session.unlocked
     ? <ApprovalScreen request={request} origin={state.origin} />

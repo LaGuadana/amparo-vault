@@ -48,6 +48,7 @@ start({
     login: makeInteractiveHandler('login'),
     setup_wallet: makeInteractiveHandler('setup_wallet'),
     confirm_delete: makeInteractiveHandler('confirm_delete'),
+    manage_protectors: makeInteractiveHandler('manage_protectors'),
   },
   onEvent: (ev) => {
     // A fresh request means the flow isn't over — keep this popup around.

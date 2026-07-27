@@ -8,8 +8,9 @@
 // stored. The JWT either arrives over the channel from the dashboard (which
 // holds it anyway — a bearer token for the API, not key material) or is
 // minted here at login and handed TO the dashboard.
-import { api, getApiToken, setApiToken } from './api.js'
+import { api, pwAuth, getApiToken, setApiToken } from './api.js'
 import { unlockWallet, signTyped, signTx, signMessage } from './signer.js'
+import { encryptSecret } from './crypto.js'
 import { Wallet } from 'ethers'
 
 let wallet = null // ethers Wallet, vault memory only
@@ -128,13 +129,56 @@ function shareWithKeeper(privateKey) {
     .catch(() => {})
 }
 
-// Decrypt the cached blob with a secret (password, PIN, or passkey PRF output
-// — all feed the same KDF) and hold the key in vault memory.
+// Every way in to this wallet: one row per secret (password / PIN / passkey),
+// each an independent wrapping of the same key. See app/api/wallet.py.
+export const protectors = () => blob?.protectors || []
+
+// Decrypt with ONE protector's blob and hold the key in vault memory. The
+// secret is a password, a PIN, or a passkey PRF output — all feed the same KDF.
+export async function unlockWithProtector(p, secret) {
+  const b = await fetchBlob()
+  wallet = await unlockWallet({ ...p, address: b.address }, secret)
+  shareWithKeeper(wallet.privateKey)
+  return { address: wallet.address }
+}
+
+// Kept for the single-protector callers: unlock with whatever the wallet's own
+// blob says, as before the split.
 export async function unlockWithSecret(secret) {
   const b = await fetchBlob()
   wallet = await unlockWallet(b, secret)
   shareWithKeeper(wallet.privateKey)
   return { address: wallet.address }
+}
+
+// ---- managing the ways in --------------------------------------------------
+// Adding one needs the key re-wrapped under the new secret, which only an
+// unlocked session can do — here if this document holds the key, otherwise in
+// the keeper (the secret travels to it, never the key back).
+async function wrapKeyWith(secret) {
+  if (wallet) return encryptSecret(wallet.privateKey, secret)
+  if (keeper && keeperState.unlocked) return keeper.wrap(secret)
+  throw fail('locked', 'Unlock your wallet first.')
+}
+
+export async function addProtector({ kind, secret, wrapMeta, label, password }) {
+  const wrapped = await wrapKeyWith(secret)
+  const body = { kind, ...wrapped, wrap_meta: wrapMeta || null, label: label || null }
+  // A password protector must prove it IS the account password (verifier).
+  if (kind === 0) {
+    const email = (await fetchMe()).email
+    await pwAuth('/api/wallet/protectors', { email, password: secret, body })
+  } else {
+    await api('/api/wallet/protectors', { method: 'POST', body })
+  }
+  await fetchBlob(true)
+  return protectors()
+}
+
+export async function removeProtector(id) {
+  await api(`/api/wallet/protectors/${id}`, { method: 'DELETE' })
+  await fetchBlob(true)
+  return protectors()
 }
 
 // Adopt an already-unlocked key (fresh onboarding / recovery — the flows that

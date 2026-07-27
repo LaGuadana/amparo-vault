@@ -33,6 +33,7 @@
 // reload asks for the password again, which we prefer over an at-rest secret.
 import { Wallet } from 'ethers'
 import { signTyped, signTx, signMessage } from './signer.js'
+import { encryptSecret } from './crypto.js'
 
 const PEER_VERSION = 1
 const FIND_TIMEOUT_MS = 1200
@@ -82,6 +83,13 @@ export function startKeeper({ onChange = () => {} } = {}) {
       if (kind === 'sign_tx') return signTx(wallet, payload.tx)
       if (kind === 'sign_message') return { flat: await signMessage(wallet, payload.message) }
       throw new Error(`unknown signing kind: ${kind}`)
+    },
+    // Re-wrap the held key under a new secret so the user can add another way
+    // in (a phone's Face ID, a PIN) without the plaintext key ever leaving
+    // this document — the popup sends the secret, not the other way round.
+    wrap: ({ secret }) => {
+      if (!wallet) throw new Error('the vault session is locked')
+      return encryptSecret(wallet.privateKey, secret)
     },
   }
 
@@ -164,6 +172,7 @@ export function findKeeper() {
         adopt: (privateKey, jwt) => call('adopt', { privateKey, jwt }),
         lock: () => call('lock'),
         sign: (kind, payload) => call('sign', { kind, payload }),
+        wrap: (secret) => call('wrap', { secret }),
       })
     }
     window.addEventListener('message', onAck)

@@ -36,7 +36,7 @@ export function detectMode(win = window) {
 // rate-limited treatment: anything involving the user's trust happens in a
 // window with a real URL bar, one thing at a time.
 export const SIGNING_KINDS = new Set(['sign_typed', 'sign_tx', 'sign_message'])
-export const INTERACTIVE_KINDS = new Set(['login', 'setup_wallet', 'confirm_delete'])
+export const INTERACTIVE_KINDS = new Set(['login', 'setup_wallet', 'confirm_delete', 'manage_protectors'])
 const POPUP_KINDS = new Set([...SIGNING_KINDS, ...INTERACTIVE_KINDS])
 
 // Rolling-window rate limits. Signing is deliberately generous enough for a
