@@ -53,11 +53,77 @@ const es = {
   'Gas limit': 'Límite de gas',
   Nonce: 'Nonce',
   Data: 'Datos',
-  'no data': 'sin datos',
-  '{n} bytes': '{n} bytes',
+  none: 'ninguno',
+  unknown: 'desconocido',
   Domain: 'Dominio',
   Type: 'Tipo',
   Contents: 'Contenido',
+  'Technical details & raw payload': 'Detalles técnicos y contenido en bruto',
+
+  // decoded transactions (decode.js)
+  'Send {amount}': 'Enviar {amount}',
+  Amount: 'Importe',
+  Token: 'Token',
+  Contract: 'Contrato',
+  'Token approval': 'Aprobación de token',
+  Spender: 'Autorizado',
+  Allowance: 'Límite autorizado',
+  Unlimited: 'Ilimitado',
+  'An approval lets the spender move this token from your wallet later. Approve only if you just started this in the dashboard.':
+    'Una aprobación permite al autorizado mover este token desde tu billetera más adelante. Aprueba solo si acabas de iniciar esto en el panel.',
+  'Wrap {amount}': 'Envolver {amount}',
+  'Unwrap wrapped token': 'Desenvolver token',
+  'Contract call': 'Llamada a contrato',
+  'The vault can’t decode this contract call. The exact bytes are below — approve only if you just started this action in the dashboard.':
+    'La bóveda no puede descodificar esta llamada a contrato. Los bytes exactos están abajo — aprueba solo si acabas de iniciar esta acción en el panel.',
+  '{amount} raw units of {address}': '{amount} unidades brutas de {address}',
+
+  // decoded typed data (decode.js)
+  Venue: 'Plataforma',
+  Side: 'Lado',
+  Buy: 'Comprar',
+  Sell: 'Vender',
+  Shares: 'Participaciones',
+  'Limit price': 'Precio límite',
+  '{price} / share': '{price} por participación',
+  'You pay up to': 'Pagas como máximo',
+  'You receive at least': 'Recibes como mínimo',
+  'Outcome token': 'Token de resultado',
+  'Venue fee': 'Comisión de la plataforma',
+  'Buy {shares} shares — {venue}': 'Comprar {shares} participaciones — {venue}',
+  'Sell {shares} shares — {venue}': 'Vender {shares} participaciones — {venue}',
+  'Signed via': 'Firmado vía',
+  'your deposit wallet': 'tu billetera de depósito',
+  'Polymarket API access': 'Acceso API de Polymarket',
+  Timestamp: 'Marca de tiempo',
+  'Hyperliquid trading action': 'Acción de trading en Hyperliquid',
+  'Action hash': 'Hash de la acción',
+  'Hyperliquid {action}': 'Hyperliquid {action}',
+  'Hyperliquid actions are hashed before signing, so the vault can’t show the order details — verify them on the dashboard screen you just used.':
+    'Las acciones de Hyperliquid se firman como hash, así que la bóveda no puede mostrar los detalles de la orden — verifícalos en la pantalla del panel que acabas de usar.',
+  'Swap on CoW Protocol': 'Intercambio en CoW Protocol',
+  'Buy at least': 'Recibes al menos',
+  Receiver: 'Destinatario',
+  'Token permit — {name}': 'Permiso de token — {name}',
+  Deadline: 'Fecha límite',
+  'A permit is a gasless approval: it lets the spender move this token from your wallet later.':
+    'Un permit es una aprobación sin gas: permite al autorizado mover este token desde tu billetera más adelante.',
+  Stake: 'Apuesta',
+  'Min odds': 'Cuota mínima',
+  Expires: 'Expira',
+  'Place bet — Azuro': 'Realizar apuesta — Azuro',
+  'Place {n} bets — Azuro': 'Realizar {n} apuestas — Azuro',
+  'Cash out — Azuro': 'Cash out — Azuro',
+  'The vault doesn’t recognize this message format. The exact contents are below — approve only if you just started this action in the dashboard.':
+    'La bóveda no reconoce este formato de mensaje. El contenido exacto está abajo — aprueba solo si acabas de iniciar esta acción en el panel.',
+
+  // anti-phishing phrase
+  'Pick a security phrase for this device. The real vault will always show it up here — a fake window can’t know it.':
+    'Elige una frase de seguridad para este dispositivo. La bóveda auténtica siempre la mostrará aquí arriba — una ventana falsa no puede conocerla.',
+  'Your security phrase — a window without it is not the real vault.':
+    'Tu frase de seguridad — una ventana que no la muestre no es la bóveda auténtica.',
+  'e.g. green teapot': 'p. ej. tetera verde',
+  Save: 'Guardar',
 
   // auth (login/register + OTP)
   'Log in': 'Iniciar sesión',

@@ -2,34 +2,62 @@
 // each request kind walks through — login/register (auth.jsx), wallet setup
 // (onboarding.jsx), protector-aware unlock (unlock.jsx), account deletion
 // (delete.jsx), and the signature approval below. Everything rendered in the
-// approval views comes from the payload that will be signed, nothing else
-// (see approve.js).
+// approval views is DECODED from the payload that will be signed (decode.js)
+// and from nothing else (see approve.js); the raw payload is always one
+// <details> away, so nothing is ever signed blind.
 //
 // NOTE: no inline style={} anywhere in the vault — the CSP is style-src 'self',
 // which forbids style attributes. Classes only.
-import { useState, useSyncExternalStore } from 'react'
-import { subscribe, getState } from './store.js'
+import { useMemo, useState, useSyncExternalStore } from 'react'
+import { subscribe, getState, savePhrase } from './store.js'
 import { approveCurrent, rejectCurrent, resolveCurrent } from './approve.js'
+import { decodeTx, decodeTyped } from './decode.js'
 import AuthFlow from './auth.jsx'
 import { OnboardingFlow } from './onboarding.jsx'
 import UnlockPanel from './unlock.jsx'
 import DeleteFlow from './delete.jsx'
 import { t } from './i18n.js'
 
-function Brand() {
+// The brand line doubles as the anti-phishing anchor: once a phrase is set on
+// this device, every real vault screen shows it — a fake vault window drawn
+// by a compromised dashboard can't know it (phrase.js).
+function Brand({ phrase }) {
   return (
     <div className="brandline">
       <span className="brand">amparo</span>
       <span className="tag">vault</span>
+      {phrase ? <span className="phrase" title={t('Your security phrase — a window without it is not the real vault.')}>{phrase}</span> : null}
     </div>
   )
 }
 
-function Standalone() {
+// One-time, non-blocking phrase setup, shown until one is chosen.
+function PhraseSetup() {
+  const [value, setValue] = useState('')
+  return (
+    <div className="phrasebox">
+      <div className="dim">
+        {t('Pick a security phrase for this device. The real vault will always show it up here — a fake window can’t know it.')}
+      </div>
+      <div className="phraserow">
+        <input
+          value={value}
+          maxLength={40}
+          placeholder={t('e.g. green teapot')}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && value.trim() && savePhrase(value)}
+        />
+        <button className="ghost" disabled={!value.trim()} onClick={() => savePhrase(value)}>{t('Save')}</button>
+      </div>
+    </div>
+  )
+}
+
+function Standalone({ phrase }) {
   return (
     <div className="wrap">
       <div className="card">
-        <Brand />
+        <Brand phrase={phrase} />
         <h1>{t('This is amparo’s signing vault.')}</h1>
         <p className="dim">
           {t('The vault is a small, open-source page on its own origin. It is where your password is entered, your wallet key is unlocked, and every transaction is approved and signed. The dashboard can only ask it for signatures — your key and password never leave this origin.')}
@@ -42,71 +70,7 @@ function Standalone() {
   )
 }
 
-// ---- payload summaries -------------------------------------------------------
-// Step-2 baseline: show the actual fields of what will be signed, verbatim.
-// Step 4 turns these into meaningful decodes (asset, market, recipient).
-
-const CHAIN_NAME = { 1: 'Ethereum', 137: 'Polygon', 8453: 'Base', 42161: 'Arbitrum' }
-const CHAIN_SYMBOL = { 1: 'ETH', 137: 'POL', 8453: 'ETH', 42161: 'ETH' }
-
-function chainLabel(chainId) {
-  const id = Number(chainId)
-  return CHAIN_NAME[id] ? `${CHAIN_NAME[id]} (${id})` : `chain ${id}`
-}
-
-function fmtNative(value, chainId) {
-  const wei = BigInt(value ?? 0)
-  const sym = CHAIN_SYMBOL[Number(chainId)] || ''
-  const whole = wei / 10n ** 18n
-  const frac = ((wei % 10n ** 18n) + 10n ** 18n).toString().slice(1).replace(/0+$/, '')
-  return `${whole}${frac ? '.' + frac : ''} ${sym}`.trim()
-}
-
-function Row({ label, children }) {
-  return (
-    <div className="prow">
-      <div className="plabel">{label}</div>
-      <div className="pvalue mono">{children}</div>
-    </div>
-  )
-}
-
-function TxSummary({ tx }) {
-  const data = typeof tx.data === 'string' && tx.data.length > 2 ? tx.data : null
-  return (
-    <div className="payload">
-      <Row label={t('To')}>{tx.to}</Row>
-      <Row label={t('Value')}>{fmtNative(tx.value, tx.chainId)}</Row>
-      <Row label={t('Chain')}>{chainLabel(tx.chainId)}</Row>
-      <Row label={t('Nonce')}>{String(tx.nonce)}</Row>
-      <Row label={t('Gas limit')}>{String(tx.gas)}</Row>
-      <Row label={t('Data')}>
-        {data ? `${data.slice(0, 10)}… (${t('{n} bytes', { n: (data.length - 2) / 2 })})` : t('no data')}
-      </Row>
-    </div>
-  )
-}
-
-function TypedSummary({ td }) {
-  const d = td.domain || {}
-  return (
-    <div className="payload">
-      <Row label={t('Domain')}>{[d.name, d.version].filter(Boolean).join(' v') || '—'}</Row>
-      {d.chainId != null && <Row label={t('Chain')}>{chainLabel(d.chainId)}</Row>}
-      <Row label={t('Type')}>{td.primaryType || Object.keys(td.types || {}).filter((k) => k !== 'EIP712Domain')[0] || '—'}</Row>
-      <div className="plabel">{t('Contents')}</div>
-      <pre className="pjson">{JSON.stringify(td.message, null, 2)}</pre>
-    </div>
-  )
-}
-
-function MessageSummary({ message }) {
-  return (
-    <div className="payload">
-      <pre className="pjson">{message}</pre>
-    </div>
-  )
-}
+// ---- request flow -------------------------------------------------------------
 
 const KIND_LABEL = {
   sign_tx: 'Transaction',
@@ -114,11 +78,31 @@ const KIND_LABEL = {
   sign_message: 'Message',
 }
 
-// ---- request flow -------------------------------------------------------------
+function Rows({ rows }) {
+  return (
+    <>
+      {rows.map((r, i) => (
+        <div className="prow" key={i}>
+          <div className="plabel">{r.label}</div>
+          <div className="pvalue mono">{r.value}</div>
+        </div>
+      ))}
+    </>
+  )
+}
 
 function ApprovalScreen({ request, origin }) {
   const [busy, setBusy] = useState(false)
   const { kind, payload } = request
+
+  // Decoded from the exact object approveCurrent() will sign — same reference,
+  // no re-fetch, nothing dashboard-supplied besides the payload itself.
+  const d = useMemo(() => {
+    if (kind === 'sign_tx') return decodeTx(payload.tx, t)
+    if (kind === 'sign_typed') return decodeTyped(payload.typed_data, t)
+    return null // sign_message: the verbatim text IS the meaning
+  }, [kind, payload])
+  const raw = kind === 'sign_tx' ? payload.tx : kind === 'sign_typed' ? payload.typed_data : payload.message
 
   async function approve() {
     setBusy(true)
@@ -127,15 +111,21 @@ function ApprovalScreen({ request, origin }) {
 
   return (
     <>
-      <h1>{t('Signature request')}</h1>
+      <h1>{d ? d.title : t('Signature request')}</h1>
       <div className="askedby">
         <span className="dim">{t(KIND_LABEL[kind] || kind)}</span>
         {origin ? <span className="mono dim"> · {origin}</span> : null}
       </div>
       <p className="dim">{t('Review what will be signed. Approving signs exactly what is shown here — nothing else.')}</p>
-      {kind === 'sign_tx' && <TxSummary tx={payload.tx} />}
-      {kind === 'sign_typed' && <TypedSummary td={payload.typed_data} />}
-      {kind === 'sign_message' && <MessageSummary message={payload.message} />}
+      <div className="payload">
+        {d ? <Rows rows={d.rows} /> : <pre className="pjson">{String(payload.message)}</pre>}
+      </div>
+      {d?.warning && <div className="warnbox">{d.warning}</div>}
+      <details className="rawbox">
+        <summary>{t('Technical details & raw payload')}</summary>
+        {d?.techRows ? <div className="payload"><Rows rows={d.techRows} /></div> : null}
+        <pre className="pjson">{typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2)}</pre>
+      </details>
       <div className="btnrow">
         <button className="primary" disabled={busy} onClick={approve}>
           {busy ? t('Signing…') : t('Approve & sign')}
@@ -170,7 +160,8 @@ function Connected({ state }) {
   return (
     <div className="wrap">
       <div className="card">
-        <Brand />
+        <Brand phrase={state.phrase} />
+        {!state.phrase && <PhraseSetup />}
         {request ? (
           <RequestScreen request={request} state={state} />
         ) : (
@@ -205,7 +196,7 @@ function Connected({ state }) {
 
 export default function App() {
   const state = useSyncExternalStore(subscribe, getState)
-  if (state.mode === 'standalone') return <Standalone />
+  if (state.mode === 'standalone') return <Standalone phrase={state.phrase} />
   if (state.mode === 'iframe') return null // silent ops only; nothing to show
   return <Connected state={state} />
 }

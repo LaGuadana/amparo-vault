@@ -3,6 +3,7 @@
 // Secrets never enter this store: the unlocked wallet stays in session.js
 // closure; React only learns {unlocked, address}.
 import * as session from './session.js'
+import { getPhrase, setPhrase } from './phrase.js'
 
 let state = {
   mode: 'standalone',
@@ -13,6 +14,7 @@ let state = {
   // resolve/reject live in approve.js, outside anything React can touch.
   request: null,
   lang: 'en',
+  phrase: getPhrase(), // anti-phishing phrase for this device (may be '')
 }
 const subs = new Set()
 
@@ -33,6 +35,12 @@ export function initStore(mode, lang) {
 
 export function setStoreLang(lang) {
   set({ lang })
+}
+
+export function savePhrase(p) {
+  const v = setPhrase(p)
+  if (v) set({ phrase: v })
+  return v
 }
 
 export function refreshSession() {

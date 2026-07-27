@@ -106,6 +106,43 @@ vault refuses to load.
    legitimate multi-step flows, far below silent-drain cadence); other kinds
    120 per minute (`rate_limited`).
 
+## The approval screen decodes what it signs (`src/decode.js`)
+
+The linchpin control: the vault renders MEANING — recipient, amount, asset,
+market, side — from the exact object it will sign, and from nothing else. No
+dashboard-supplied labels or descriptions are ever displayed (a lying
+"description" field is the oldest wallet-phishing trick there is), and the
+raw payload is always one `<details>` away.
+
+Decoded natively: ERC-20 transfers/approvals (with a token registry copied
+from this repo's backend services — unknown tokens degrade to raw units +
+address, never a guess), native sends, wrap/unwrap, Polymarket & Limitless
+CLOB orders (side/shares/limit price/total, including Solady `TypedDataSign`
+deposit-wallet wraps), CoW swaps, EIP-2612 permits, Azuro bets/cash-outs,
+Polymarket `ClobAuth`, and Hyperliquid typed transactions. Hyperliquid L1
+actions are hashed before signing by design — the vault says so honestly
+instead of pretending to decode them. Anything unrecognized is shown verbatim
+with a warning, so nothing is ever signed blind.
+
+## Anti-phishing phrase (`src/phrase.js`)
+
+At first use on a device the vault asks the user to pick a short phrase,
+stored in the VAULT origin's localStorage (first-party in the popup — one
+more reason for popup-first). Every real vault screen shows it in the header;
+a fake vault drawn by a compromised dashboard can't know it. It layers UNDER
+the primary defense (the popup's real URL bar) and never leaves the origin.
+
+## Passkeys / WebAuthn — evaluation outcome
+
+Adopted, as a wallet **protector** (how the key blob is encrypted), not as a
+server login: the passkey's PRF output is the KDF input for the same
+PBKDF2→AES-GCM scheme as the password/PIN paths, released only after the
+platform verifies the user (Face ID / Touch ID). Because WebAuthn credentials
+are origin-bound by the authenticator, a fake vault window harvests nothing
+reusable — exactly the property the plan wanted. New passkeys pin
+`rp.id = <apex>` so any amparo subdomain can assert them; legacy
+dashboard-bound passkeys fall back to backup-key recovery (see webauthn.js).
+
 ## Error codes
 
 `popup_required` · `busy` · `rate_limited` · `not_implemented` · `failed`

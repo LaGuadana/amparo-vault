@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build && node scripts/gen-integrity.mjs",
     "preview": "vite preview",
-    "test": "node scripts/test-origins.mjs",
+    "test": "node scripts/test-origins.mjs && node scripts/test-decode.mjs",
     "verify-site": "node scripts/verify-site.mjs"
   },
   "engines": {

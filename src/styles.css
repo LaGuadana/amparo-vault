@@ -98,6 +98,31 @@ button.ghost:hover:not(:disabled) { color: var(--fg); }
 .legal ul { padding-left: 18px; margin: 6px 0; }
 .legal p { margin: 6px 0; }
 
+/* anti-phishing phrase */
+.phrase {
+  margin-left: auto; font-family: var(--mono); font-size: 12px;
+  color: var(--green); border: 1px solid var(--border); border-radius: 99px;
+  padding: 2px 10px; max-width: 46%; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.phrasebox {
+  border: 1px dashed var(--border); border-radius: 8px; padding: 10px 12px;
+  margin-top: 12px; font-size: 12.5px;
+}
+.phraserow { display: flex; gap: 8px; margin-top: 8px; }
+.phraserow input { flex: 1; }
+.phraserow button { flex: none; }
+
+/* decode warnings + raw payload */
+.warnbox {
+  border: 1px solid var(--yellow); border-radius: 8px; color: var(--yellow);
+  font-size: 12.5px; padding: 9px 12px; margin-top: 10px; line-height: 1.45;
+}
+.rawbox { margin-top: 10px; font-size: 12.5px; }
+.rawbox summary { color: var(--fg-dim); cursor: pointer; }
+.rawbox summary:hover { color: var(--fg); }
+.rawbox .payload { margin-top: 8px; }
+
 /* signature-request payload */
 .askedby { margin: -4px 0 8px; font-size: 12.5px; }
 .payload { border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-top: 10px; background: var(--bg); }
