@@ -86,6 +86,7 @@ never from message content, query params, or referrers:
 | `login`          | popup only | email+password+OTP (+ first wallet setup) typed IN the vault; resolves `{token, has_wallet, has_kraken, has_coinbase, passwordless, address}` |
 | `setup_wallet`   | popup only | generate/import + protector choice in the vault; resolves `{address}` |
 | `confirm_delete` | popup only | password-confirmed account erasure, performed by the vault        |
+| `manage_protectors` | popup only | add/remove ways to unlock (password, PIN, this device's passkey); resolves `{ways}` |
 
 Signing kinds return **only the signature** — never key material. Payloads
 never carry secrets in either direction: passwords, PINs, backup keys, and
@@ -123,6 +124,43 @@ Polymarket `ClobAuth`, and Hyperliquid typed transactions. Hyperliquid L1
 actions are hashed before signing by design — the vault says so honestly
 instead of pretending to decode them. Anything unrecognized is shown verbatim
 with a warning, so nothing is ever signed blind.
+
+## The session keeper (`src/keeper.js`)
+
+An approval popup closes itself ~1.8s after signing (cancelled by a follow-up
+request, so one window serves a multi-signature flow), and the next signature
+does **not** re-ask for the secret. Those two only coexist because the unlocked
+key does not live in the popup: it lives in a hidden vault-origin **keeper**
+iframe the dashboard embeds for its tab.
+
+- The keeper is vault code on the vault origin, so the dashboard cannot read
+  its memory — embedding a document grants no access to it.
+- Popup → keeper messages go directly window-to-window via
+  `window.opener.frames[i].postMessage(msg, VAULT_ORIGIN)` (indexed `frames`
+  access is cross-origin-allowed). The dashboard neither relays nor sees them;
+  a foreign document in that frame slot never receives the message. Worst case
+  for a hostile dashboard is denial of service.
+- This channel is separate from the dashboard-facing protocol above, which
+  still refuses every signing kind from an iframe. The keeper signs only for a
+  vault-origin popup that has already shown the user what they approved.
+- **Nothing is persisted.** The session dies with the tab (close, reload,
+  logout), so a stolen device yields no key. The cost is that a dashboard
+  reload asks for the secret again — deliberately preferred over an at-rest
+  secret.
+- Account switching is guarded on the keeper (`bind`): a fresh popup learning
+  the tab's JWT is not a user change, but a *different* JWT wipes the key.
+
+## Many ways to unlock (`wallet_protectors`)
+
+A wallet can be opened by several secrets — an account password, a PIN, a
+passkey per device — each an independent wrapping of the same key
+(`app/api/wallet.py`, migration 0035). Platform passkeys are device-bound, so
+this is what lets someone who signed up on a laptop add Face ID on their phone.
+`manage_protectors` adds and removes them; a password protector must prove it
+is the account password, and the last way in can never be removed. Re-wrapping
+needs an unlocked wallet: when the key is in the keeper, the popup sends the
+new secret to it and receives a wrapped blob — the plaintext key never leaves
+the document holding it.
 
 ## Anti-phishing phrase (`src/phrase.js`)
 
