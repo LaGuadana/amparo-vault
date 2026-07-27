@@ -1,0 +1,46 @@
+/* Same palette as the dashboard so the vault reads as amparo, but SYSTEM fonts
+   only — the vault loads nothing from any other origin, fonts included. */
+:root {
+  --bg: #171514; --bg2: #1e1c1a; --bg3: #2a2724; --border: #393530;
+  --fg: #ece8e1; --fg-dim: #a29a8f;
+  --red: #e0685e; --green: #4bb885; --yellow: #d9a94a;
+  --radius: 10px;
+  --font: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --display: Georgia, 'Times New Roman', serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font); font-size: 14px; line-height: 1.5;
+  min-height: 100vh;
+}
+::selection { background: rgba(236, 232, 225, 0.25); }
+:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; border-radius: 4px; }
+
+.wrap { max-width: 460px; margin: 0 auto; padding: 28px 18px; }
+.card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 22px;
+}
+h1 { font-size: 17px; font-weight: 600; margin: 14px 0 10px; }
+p { margin: 8px 0; }
+.dim { color: var(--fg-dim); font-size: 13px; }
+.mono { font-family: var(--mono); font-size: 12.5px; }
+
+.brandline { display: flex; align-items: baseline; gap: 8px; }
+.brand { font-family: var(--display); font-style: italic; font-weight: 500; font-size: 22px; }
+.brand::after { content: '.'; color: var(--green); font-style: normal; }
+.tag {
+  font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--fg-dim); border: 1px solid var(--border); border-radius: 99px;
+  padding: 2px 8px;
+}
+
+.status { display: flex; align-items: center; gap: 8px; margin: 14px 0 6px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--yellow); flex: none; }
+.dot.ok { background: var(--green); }
+
+.activity { list-style: none; margin: 14px 0 0; padding: 10px 0 0; border-top: 1px solid var(--border); }
+.activity li { padding: 3px 0; font-size: 12.5px; }
+.activity li.refused .mono { color: var(--red); }

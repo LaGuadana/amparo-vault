@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- amparo tab mark master: wordmark distilled to "a." — chunky by design so
+       it stays legible at 16px. PNGs in this dir are rendered from this file. -->
+  <rect width="64" height="64" rx="14" fill="#2a2724"/>
+  <text x="25" y="48" text-anchor="middle" font-family="Noto Serif Display, Georgia, serif" font-style="italic" font-weight="700" font-size="54" fill="#ece8e1">a</text>
+  <circle cx="48" cy="41" r="7" fill="#4bb885"/>
+</svg>

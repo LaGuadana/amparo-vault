@@ -1,0 +1,23 @@
+<!doctype html>
+<!-- No inline style attribute here (the dashboard's index.html has one): the
+     vault CSP is style-src 'self', which forbids it. The stylesheet link is
+     render-blocking, so body background from CSS paints without a flash. -->
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#171514" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <!-- No web fonts, no analytics, no CDN — every byte of this page is
+         same-origin and hash-pinned (see integrity.json). System fonts only. -->
+    <title>amparo vault</title>
+    <script type="module" crossorigin src="/assets/index-DCcEy5bz.js" integrity="sha384-QKZrjxElPGcfDeYcTh+9VQlNx5axswJegG6UdlIqNvZNtqDMM4aRRdeeX0gEnL9y"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DblCfZal.css" integrity="sha384-SoipITg7zoxc3K7ULIFjR1Fr+yjj99zRunyzzvejcPRryErd03FW59S+3xnwHqoT">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

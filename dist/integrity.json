@@ -1,0 +1,39 @@
+{
+  "_comment": "SHA-256 (hex) and SHA-384 (SRI) digests of every file in the amparo vault bundle. Rebuild from source (npm ci && npm run build) to reproduce; run scripts/verify-site.mjs <url> to confirm a live deployment serves exactly these bytes.",
+  "algorithm": {
+    "sha256": "hex",
+    "sha384": "base64 (SRI subresource-integrity form)"
+  },
+  "files": {
+    "assets/index-DCcEy5bz.js": {
+      "sha256": "78195ac99ef9789056c868d08e12e7be3d676fff9f8f71f9d9df79adfa00e4c9",
+      "sha384": "sha384-QKZrjxElPGcfDeYcTh+9VQlNx5axswJegG6UdlIqNvZNtqDMM4aRRdeeX0gEnL9y",
+      "bytes": 147601
+    },
+    "assets/index-DblCfZal.css": {
+      "sha256": "271be85fcb7b7de4bb893ccdc40665dc5e1f99a8833ef5f50311ce653272132c",
+      "sha384": "sha384-SoipITg7zoxc3K7ULIFjR1Fr+yjj99zRunyzzvejcPRryErd03FW59S+3xnwHqoT",
+      "bytes": 1614
+    },
+    "favicon-16.png": {
+      "sha256": "f39cd880962ec1dc90482f6430b5dfa3597f9ee319083c6c886ea0ef9ae98de8",
+      "sha384": "sha384-oQSgaogYUA+u9hj8CU36Aa/cjC+irLwLbj/BN7TbftjG8gsDfE/SorNrZq3QlcED",
+      "bytes": 543
+    },
+    "favicon-32.png": {
+      "sha256": "9c20c6f504ed03b6643821cfdc2c2a8fb8bf64c1f27b9ed15a4808a59c54bf19",
+      "sha384": "sha384-E5lqKFWVcqE5sqkN0/AbAUGYcCYtyooagzoB/cY3Q05JUYY7hpndQ4w3MMxD17ax",
+      "bytes": 1094
+    },
+    "favicon.svg": {
+      "sha256": "7e703ada9fbed2e086a0438eb0edd675a99c68493df2bf6232c2785dd3a4605c",
+      "sha384": "sha384-8A/lqXsuL2UrWykg7PdLK8WZ7W902NzLOC4rD0qY0ejnlby8B3YLax0KZhpgYx2E",
+      "bytes": 507
+    },
+    "index.html": {
+      "sha256": "4e1fd832463d168d468370ea693f9f9478d314a1cfa3f5c79ef01fe906377c4f",
+      "sha384": "sha384-Dovt0Av51dGiNiNmeQrVo1ZO/+xT/3K8v8ksSADxCIAtFO7JbRl0FMIkla5THN4e",
+      "bytes": 1401
+    }
+  }
+}
