@@ -79,6 +79,7 @@ export function resolveCurrent(result) {
   current = null
   setRequest(null)
   resolve(result)
+  scheduleClose()
 }
 
 // UI actions ------------------------------------------------------------------
@@ -98,16 +99,18 @@ export async function approveCurrent() {
     current = null
     setRequest(null)
     reject(fail('sign_failed', e?.message || String(e)))
+    scheduleClose() // the error surfaces in the dashboard, not here
   }
 }
 
 // ---- popup auto-close ------------------------------------------------------
-// A finished approval should get out of the way. The popup closes itself
-// shortly after signing — long enough for the signature to reach the dashboard
-// and for a follow-up request in the same flow (multi-signature actions fire
-// their next step within a second or two) to cancel the close. The key is not
-// lost with the window: the keeper in the dashboard tab holds the session, so
-// the next popup opens already unlocked.
+// A settled request should get out of the way — approve, reject, interactive
+// done and signing failure all close the popup shortly after. The delay is
+// long enough for the result to reach the dashboard and for a follow-up
+// request in the same flow (multi-signature actions fire their next step
+// within a second or two) to cancel the close. The key is not lost with the
+// window: the keeper in the dashboard tab holds the session, so the next popup
+// opens already unlocked.
 let closeTimer = null
 
 export function cancelAutoClose() {
@@ -132,4 +135,5 @@ export function rejectCurrent() {
   current = null
   setRequest(null)
   reject(fail('rejected', 'You declined the request in the vault.'))
+  scheduleClose()
 }
