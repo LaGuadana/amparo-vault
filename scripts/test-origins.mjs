@@ -1,8 +1,10 @@
-// Unit tests for the vault's origin access-control (src/origins.js) — the one
-// pure-logic piece of the trust boundary, so it gets exercised without a
-// browser: node scripts/test-origins.mjs (also `npm test`).
+// Unit tests for the vault's origin-scoping logic — the pure functions of the
+// trust boundary (src/origins.js message pairing + src/webauthn.js passkey RP
+// scoping), exercised without a browser: node scripts/test-origins.mjs
+// (also `npm test`).
 import { strict as assert } from 'node:assert'
 import { dashboardOriginFor, isAllowedDashboardOrigin } from '../src/origins.js'
+import { rpIdFor } from '../src/webauthn.js'
 
 const at = (hostname) => ({ hostname })
 let n = 0
@@ -44,5 +46,13 @@ for (const host of ['amparo.systems', 'dashboard.amparo.systems', 'vault.', 'exa
   ok(!isAllowedDashboardOrigin('https://dashboard.amparo.systems', loc), `${host}: refuses everything`)
   ok(!isAllowedDashboardOrigin('http://localhost:5173', loc), `${host}: refuses localhost too`)
 }
+
+// Passkey RP scoping: vault.<apex> passkeys bind to the apex so any amparo
+// subdomain could assert them; localhost keeps the WebAuthn default.
+ok(rpIdFor('vault.amparo.systems') === 'amparo.systems', 'passkey rpId scopes to apex')
+ok(rpIdFor('vault.example.org') === 'example.org', 'generic apex scoping')
+ok(rpIdFor('localhost') === undefined, 'localhost keeps WebAuthn default rp')
+ok(rpIdFor('127.0.0.1') === undefined, '127.0.0.1 keeps WebAuthn default rp')
+ok(rpIdFor('vault.') === 'vault.', 'degenerate hostname falls through unchanged')
 
 console.log(`origins: ${n} assertions passed`)

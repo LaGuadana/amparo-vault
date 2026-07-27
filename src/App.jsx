@@ -1,13 +1,19 @@
-// Vault UI shell: standalone explainer, connection status, and the screens a
-// signature request walks through — unlock (password typed HERE, never in the
-// dashboard) then approval. Everything rendered in the approval views comes
-// from the payload that will be signed, nothing else (see approve.js).
+// Vault UI shell: standalone explainer, connection status, and the screens
+// each request kind walks through — login/register (auth.jsx), wallet setup
+// (onboarding.jsx), protector-aware unlock (unlock.jsx), account deletion
+// (delete.jsx), and the signature approval below. Everything rendered in the
+// approval views comes from the payload that will be signed, nothing else
+// (see approve.js).
 //
 // NOTE: no inline style={} anywhere in the vault — the CSP is style-src 'self',
 // which forbids style attributes. Classes only.
 import { useState, useSyncExternalStore } from 'react'
 import { subscribe, getState } from './store.js'
-import { approveCurrent, rejectCurrent, unlockWithPassword } from './approve.js'
+import { approveCurrent, rejectCurrent, resolveCurrent } from './approve.js'
+import AuthFlow from './auth.jsx'
+import { OnboardingFlow } from './onboarding.jsx'
+import UnlockPanel from './unlock.jsx'
+import DeleteFlow from './delete.jsx'
 import { t } from './i18n.js'
 
 function Brand() {
@@ -110,52 +116,6 @@ const KIND_LABEL = {
 
 // ---- request flow -------------------------------------------------------------
 
-function UnlockScreen() {
-  const [password, setPassword] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [err, setErr] = useState(null)
-
-  async function unlock() {
-    if (!password || busy) return
-    setBusy(true)
-    setErr(null)
-    try {
-      await unlockWithPassword(password)
-      setPassword('')
-    } catch (e) {
-      setErr(e?.message || String(e))
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <>
-      <h1>{t('Unlock your wallet')}</h1>
-      <p className="dim">
-        {t('The dashboard requested a signature. Enter your password to unlock your wallet first — it never leaves this page.')}
-      </p>
-      <label className="flabel" htmlFor="vault-password">{t('Password')}</label>
-      <input
-        id="vault-password"
-        type="password"
-        autoComplete="current-password"
-        autoFocus
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && unlock()}
-      />
-      {err && <div className="errtext">{err}</div>}
-      <div className="btnrow">
-        <button className="primary" disabled={busy || !password} onClick={unlock}>
-          {busy ? t('Unlocking…') : t('Unlock')}
-        </button>
-        <button className="ghost" onClick={rejectCurrent}>{t('Reject')}</button>
-      </div>
-    </>
-  )
-}
-
 function ApprovalScreen({ request, origin }) {
   const [busy, setBusy] = useState(false)
   const { kind, payload } = request
@@ -186,6 +146,25 @@ function ApprovalScreen({ request, origin }) {
   )
 }
 
+// Which screen serves the pending request. Interactive flows drive themselves
+// and settle via resolveCurrent/rejectCurrent; signing kinds go through
+// unlock-then-approve.
+function RequestScreen({ request, state }) {
+  const { kind, payload } = request
+  if (kind === 'login') {
+    return <AuthFlow payload={payload} onDone={resolveCurrent} onCancel={rejectCurrent} />
+  }
+  if (kind === 'setup_wallet') {
+    return <OnboardingFlow knownPassword={null} onDone={(address) => resolveCurrent({ address })} onCancel={rejectCurrent} />
+  }
+  if (kind === 'confirm_delete') {
+    return <DeleteFlow payload={payload} />
+  }
+  return state.session.unlocked
+    ? <ApprovalScreen request={request} origin={state.origin} />
+    : <UnlockPanel />
+}
+
 function Connected({ state }) {
   const { request, session } = state
   return (
@@ -193,11 +172,7 @@ function Connected({ state }) {
       <div className="card">
         <Brand />
         {request ? (
-          session.unlocked ? (
-            <ApprovalScreen request={request} origin={state.origin} />
-          ) : (
-            <UnlockScreen />
-          )
+          <RequestScreen request={request} state={state} />
         ) : (
           <>
             {state.origin ? (

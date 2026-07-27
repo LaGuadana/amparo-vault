@@ -30,10 +30,14 @@ export function detectMode(win = window) {
   return 'standalone'
 }
 
-// Kinds that produce a signature (or otherwise touch the key). Handlers for
-// these arrive in later steps; the guards around them are in force from day
-// one so the protocol never has a permissive phase.
+// Kinds that produce a signature (or otherwise touch the key), and the
+// interactive account flows (login/onboarding/deletion — the screens where
+// secrets are typed). Both classes get the same popup-only, single-flight,
+// rate-limited treatment: anything involving the user's trust happens in a
+// window with a real URL bar, one thing at a time.
 export const SIGNING_KINDS = new Set(['sign_typed', 'sign_tx', 'sign_message'])
+export const INTERACTIVE_KINDS = new Set(['login', 'setup_wallet', 'confirm_delete'])
+const POPUP_KINDS = new Set([...SIGNING_KINDS, ...INTERACTIVE_KINDS])
 
 // Rolling-window rate limits. Signing is deliberately generous enough for a
 // legitimate multi-step flow (bridge = approve + deposit + venue deposit) but
@@ -75,14 +79,14 @@ export function start({ handlers = {}, onEvent = () => {}, win = window } = {}) 
       port.postMessage({ id, ok: false, error: err(code, message) })
     }
 
-    if (SIGNING_KINDS.has(kind)) {
+    if (POPUP_KINDS.has(kind)) {
       // Guard order matters: mode is a hard property of the document, busy and
       // rate-limit are session state, and only then do we look for a handler.
       if (mode !== 'popup') {
         return refuse('popup_required', 'Signing is only available in the vault popup (real URL bar), never in an embedded frame.')
       }
       if (signInFlight) {
-        return refuse('busy', 'Another signing request is already awaiting approval.')
+        return refuse('busy', 'Another request is already awaiting your decision in the vault.')
       }
       if (!takeSign()) {
         return refuse('rate_limited', 'Too many signing requests; slow down.')
@@ -97,7 +101,7 @@ export function start({ handlers = {}, onEvent = () => {}, win = window } = {}) 
     }
 
     onEvent({ type: 'request', kind })
-    if (SIGNING_KINDS.has(kind)) signInFlight = true
+    if (POPUP_KINDS.has(kind)) signInFlight = true
     try {
       const result = await handler(payload, { origin, mode })
       port.postMessage({ id, ok: true, result })
@@ -106,7 +110,7 @@ export function start({ handlers = {}, onEvent = () => {}, win = window } = {}) 
       // protocol errors; the raw exception never crosses the boundary.
       port.postMessage({ id, ok: false, error: err(e?.code || 'failed', e?.message || String(e)) })
     } finally {
-      if (SIGNING_KINDS.has(kind)) signInFlight = false
+      if (POPUP_KINDS.has(kind)) signInFlight = false
     }
   }
 

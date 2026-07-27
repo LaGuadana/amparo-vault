@@ -75,17 +75,25 @@ never from message content, query params, or referrers:
 
 ### Kinds
 
-| kind           | mode       | result                                            |
-| -------------- | ---------- | ------------------------------------------------- |
-| `ping`         | any        | `{pong: true}`                                    |
-| `status`       | any        | `{version, mode, unlocked, address}`              |
-| `sign_typed`   | popup only | *(step 2+; approval UI decodes, then signs)*      |
-| `sign_tx`      | popup only | *(step 2+)*                                       |
-| `sign_message` | popup only | *(step 2+)*                                       |
+| kind             | mode       | result                                                            |
+| ---------------- | ---------- | ----------------------------------------------------------------- |
+| `ping`           | any        | `{pong: true}`                                                    |
+| `status`         | any        | `{version, mode, unlocked, address}`                              |
+| `session`        | any        | dashboard shares `{jwt, lang}`; a changed JWT relocks the vault   |
+| `sign_typed`     | popup only | `{r, s, v, flat}` after approval in the vault                     |
+| `sign_tx`        | popup only | raw signed tx hex after approval                                  |
+| `sign_message`   | popup only | `{flat}` (EIP-191) after approval                                 |
+| `login`          | popup only | email+password+OTP (+ first wallet setup) typed IN the vault; resolves `{token, has_wallet, has_kraken, has_coinbase, passwordless, address}` |
+| `setup_wallet`   | popup only | generate/import + protector choice in the vault; resolves `{address}` |
+| `confirm_delete` | popup only | password-confirmed account erasure, performed by the vault        |
 
 Signing kinds return **only the signature** — never key material. Payloads
-never carry secrets in either direction: the password is typed *into the
-vault popup*, not sent over the channel.
+never carry secrets in either direction: passwords, PINs, backup keys, and
+passkey prompts happen *inside the vault popup*, not over the channel. The
+JWT in `session` is the API bearer token the dashboard legitimately holds —
+identity, not key material. Google sign-in stays on the dashboard for the
+same reason (identity only), and because its script is third-party code the
+vault refuses to load.
 
 ## Guards on signing (in force since v1, before any signing exists)
 

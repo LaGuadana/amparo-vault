@@ -9,7 +9,7 @@
 // oldest wallet-phishing trick there is.
 import * as session from './session.js'
 import { signTyped, signTx, signMessage } from './signer.js'
-import { setRequest, refreshSession } from './store.js'
+import { setRequest } from './store.js'
 
 let current = null // {kind, payload, resolve, reject} — never in React state
 
@@ -57,6 +57,31 @@ export function makeSignHandler(kind) {
     })
 }
 
+// Interactive (non-signing) flows the dashboard can ask for: login,
+// setup_wallet, confirm_delete. Same parking mechanics; the matching UI flow
+// drives itself and settles via resolveCurrent/rejectCurrent. Login is the one
+// kind that legitimately arrives without a session (it CREATES the session).
+export function makeInteractiveHandler(kind) {
+  return (payload) =>
+    new Promise((resolve, reject) => {
+      if (kind !== 'login' && !session.hasJwt()) {
+        return reject(fail('no_session', 'The dashboard has not shared a login session yet.'))
+      }
+      current = { kind, payload: payload || {}, resolve, reject }
+      setRequest({ kind, payload: payload || {} })
+      window.focus()
+    })
+}
+
+// Settle the current interactive flow from its UI.
+export function resolveCurrent(result) {
+  if (!current) return
+  const { resolve } = current
+  current = null
+  setRequest(null)
+  resolve(result)
+}
+
 // UI actions ------------------------------------------------------------------
 
 export async function approveCurrent() {
@@ -85,11 +110,4 @@ export function rejectCurrent() {
   current = null
   setRequest(null)
   reject(fail('rejected', 'You declined the request in the vault.'))
-}
-
-// Unlock with the password typed into the vault; used by the unlock screen
-// shown when a signature is requested while locked.
-export async function unlockWithPassword(password) {
-  await session.unlock(password)
-  refreshSession()
 }

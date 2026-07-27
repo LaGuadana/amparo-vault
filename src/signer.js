@@ -8,6 +8,15 @@
 import { Wallet, Signature } from 'ethers'
 import { decryptSecret } from './crypto.js'
 
+export function generateWallet() {
+  const w = Wallet.createRandom()
+  return { wallet: new Wallet(w.privateKey), privateKey: w.privateKey }
+}
+
+export function importWallet(privateKey) {
+  return new Wallet(privateKey.startsWith('0x') ? privateKey : '0x' + privateKey)
+}
+
 export async function unlockWallet(blob, password) {
   const pk = await decryptSecret(blob, password)
   const w = new Wallet(pk)

@@ -2,14 +2,15 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { start, detectMode, PROTOCOL_VERSION } from './rpc.js'
 import { initStore, onRpcEvent, refreshSession, setStoreLang } from './store.js'
-import { makeSignHandler } from './approve.js'
+import { makeSignHandler, makeInteractiveHandler } from './approve.js'
 import * as session from './session.js'
 import { getLang, setLang } from './i18n.js'
 import App from './App.jsx'
 import './styles.css'
 
-// Request handlers. Signing kinds all route through approve.js, which parks
-// them on the approval UI — nothing signs without a click in this window.
+// Request handlers. Signing kinds and the interactive account flows all route
+// through approve.js, which parks them on the vault UI — nothing signs, logs
+// in, or is erased without the user acting in this window.
 const mode = detectMode()
 start({
   handlers: {
@@ -33,6 +34,9 @@ start({
     sign_typed: makeSignHandler('sign_typed'),
     sign_tx: makeSignHandler('sign_tx'),
     sign_message: makeSignHandler('sign_message'),
+    login: makeInteractiveHandler('login'),
+    setup_wallet: makeInteractiveHandler('setup_wallet'),
+    confirm_delete: makeInteractiveHandler('confirm_delete'),
   },
   onEvent: onRpcEvent,
 })
