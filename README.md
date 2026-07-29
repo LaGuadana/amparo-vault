@@ -13,6 +13,10 @@ can *ask* this vault for a signature over a message channel; the browser's
 same-origin policy is what keeps your password and key out of its reach. The
 full protocol and threat model are in [PROTOCOL.md](PROTOCOL.md).
 
+For the reasoning behind the design — why a popup rather than an iframe, why the
+approval screen decodes what it signs, and where the approach stops reaching —
+see [Using the same-origin policy as a custody boundary](docs/same-origin-custody-boundary.md).
+
 ## Why a popup, not an embedded frame
 
 An embedded frame has no URL bar, so a compromised dashboard could draw a
