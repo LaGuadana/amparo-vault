@@ -162,11 +162,21 @@ export function decodeTx(tx, t = defaultT) {
 
 // ---- EIP-712 typed data -----------------------------------------------------
 
+// The EIP-712 domain name is the contract's own string ("Polymarket CTF
+// Exchange") — accurate but jargon on a screen whose whole job is to be read
+// before signing. Show the venue the way the user knows it; the raw domain is
+// still there under "Technical details & raw payload", so nothing is hidden.
+const VENUE_NAME = {
+  'Polymarket CTF Exchange': 'Polymarket',
+  'Limitless CTF Exchange': 'Limitless',
+}
+
 // CLOB prediction-market order (Polymarket / Limitless — same struct family).
 // Amounts are 6-decimals on both venues; side 0 = buy, 1 = sell.
 function decodeClobOrder(domain, msg, t) {
   const row = (label, value) => ({ label: t(label), value: String(value) })
-  const venue = domain?.name || 'CTF exchange'
+  const raw = domain?.name || ''
+  const venue = VENUE_NAME[raw] || raw || 'CTF exchange'
   const side = Number(msg.side)
   const maker = BigInt(msg.makerAmount)
   const taker = BigInt(msg.takerAmount)

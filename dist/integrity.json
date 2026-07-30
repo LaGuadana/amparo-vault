@@ -5,10 +5,10 @@
     "sha384": "base64 (SRI subresource-integrity form)"
   },
   "files": {
-    "assets/index-BsJjFejG.js": {
-      "sha256": "04b801aa4d043348a0aff08fdb27267740763856b1e1214e27ad487cd1b4a22b",
-      "sha384": "sha384-mtPkLC3w8JrnED8/VH9jIT9p0jvZjWVsMDtwo9ltEO7nrIt7wuvp76Lr8YqoORVL",
-      "bytes": 396602
+    "assets/index-CF3ipi4Z.js": {
+      "sha256": "3a71b9b6b4580a66042aceb8e7d95867f32e0528193960057bc873252924ad44",
+      "sha384": "sha384-ampq8/rGG/WG8nLL8WTa3c94HHDs83Me8CIz/Ti/sBuAIzUukY5uMtxlZ8FUZor+",
+      "bytes": 396704
     },
     "assets/index-Dt12AeJ0.css": {
       "sha256": "43bfdae9bc0ba66b57198d56b303cf94bd33056d9a6359d69c4cb5cb1b10470c",
@@ -31,8 +31,8 @@
       "bytes": 507
     },
     "index.html": {
-      "sha256": "cba780781d04991611e1a70cb405d1e04aeb1cba20999a9eb2f564e4bda94df9",
-      "sha384": "sha384-d7Q9rGaodPBX+5kMggdylUtr64PqwIZykZtUbM+4QyYl2tMyflQXwrSU4fY1He+5",
+      "sha256": "d1e9a67a2dd2e7bf0c00adc8305786bab47bc288a41dc5ab6235125339bc0960",
+      "sha384": "sha384-xAnZuIPYE5CKJA0pXshPsQvNSvcrvSGCAYe0tnZZgxr4w25ASZd3ToJooc9DgniP",
       "bytes": 1401
     }
   }

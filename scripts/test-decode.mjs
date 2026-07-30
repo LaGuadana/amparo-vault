@@ -50,7 +50,7 @@ const pmOrder = decodeTyped({
     side: 0, signatureType: 0, timestamp: '0', metadata: '0x' + '00'.repeat(32), builder: '0x' + '00'.repeat(32),
   },
 })
-ok(pmOrder.title === 'Buy 10 shares — Polymarket CTF Exchange', 'PM buy order title')
+ok(pmOrder.title === 'Buy 10 shares — Polymarket', 'PM buy order title reads as the venue, not the contract')
 ok(text(pmOrder.rows).includes('$0.42 / share'), 'PM order derives the limit price')
 ok(text(pmOrder.rows).includes('4.2 USDC'), 'PM order shows max cost')
 
@@ -60,7 +60,7 @@ const llSell = decodeTyped({
   types: {},
   message: { tokenId: '9', makerAmount: '10000000', takerAmount: '6500000', side: 1, feeRateBps: '100' },
 })
-ok(llSell.title === 'Sell 10 shares — Limitless CTF Exchange', 'Limitless sell order title')
+ok(llSell.title === 'Sell 10 shares — Limitless', 'Limitless sell order title reads as the venue')
 ok(text(llSell.rows).includes('6.5 USDC'), 'sell shows proceeds floor')
 ok(text(llSell.rows).includes('1%'), 'venue fee shown')
 
