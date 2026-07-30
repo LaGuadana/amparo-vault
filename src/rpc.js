@@ -35,7 +35,12 @@ export function detectMode(win = window) {
 // secrets are typed). Both classes get the same popup-only, single-flight,
 // rate-limited treatment: anything involving the user's trust happens in a
 // window with a real URL bar, one thing at a time.
-export const SIGNING_KINDS = new Set(['sign_typed', 'sign_tx', 'sign_message'])
+// sign_batch carries several of the above and is approved with ONE click, but
+// it is emphatically still a signing kind: popup-only, single-flight, and rate
+// limited exactly like a lone signature. The friction it removes is the repeat
+// click on a multi-signature action the user already started — never the review
+// itself: the approval screen decodes and shows EVERY item before signing any.
+export const SIGNING_KINDS = new Set(['sign_typed', 'sign_tx', 'sign_message', 'sign_batch'])
 export const INTERACTIVE_KINDS = new Set(['login', 'setup_wallet', 'confirm_delete', 'manage_protectors'])
 const POPUP_KINDS = new Set([...SIGNING_KINDS, ...INTERACTIVE_KINDS])
 

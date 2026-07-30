@@ -92,34 +92,23 @@ function Rows({ rows }) {
   )
 }
 
-function ApprovalScreen({ request, origin }) {
-  const [busy, setBusy] = useState(false)
-  const { kind, payload } = request
+// Decode ONE signing item to {d, raw}. `d` is null for sign_message (the
+// verbatim text is the meaning); `raw` is always the exact object to be signed.
+function decodeItem(kind, payload) {
+  if (kind === 'sign_tx') return { d: decodeTx(payload.tx, t), raw: payload.tx }
+  if (kind === 'sign_typed') return { d: decodeTyped(payload.typed_data, t), raw: payload.typed_data }
+  return { d: null, raw: payload.message }
+}
 
-  // Decoded from the exact object approveCurrent() will sign — same reference,
-  // no re-fetch, nothing dashboard-supplied besides the payload itself.
-  const d = useMemo(() => {
-    if (kind === 'sign_tx') return decodeTx(payload.tx, t)
-    if (kind === 'sign_typed') return decodeTyped(payload.typed_data, t)
-    return null // sign_message: the verbatim text IS the meaning
-  }, [kind, payload])
-  const raw = kind === 'sign_tx' ? payload.tx : kind === 'sign_typed' ? payload.typed_data : payload.message
-
-  async function approve() {
-    setBusy(true)
-    try { await approveCurrent() } finally { setBusy(false) }
-  }
-
+// The decoded body of one item: the meaning up top, the warning, then the exact
+// bytes one <details> away. Shared by the single and batch approval screens so a
+// batched item is reviewed to the same depth as a lone one — nothing is signed
+// blind whether it arrived alone or in a group.
+function ItemBody({ kind, d, raw }) {
   return (
     <>
-      <h1>{d ? d.title : t('Signature request')}</h1>
-      <div className="askedby">
-        <span className="dim">{t(KIND_LABEL[kind] || kind)}</span>
-        {origin ? <span className="mono dim"> · {origin}</span> : null}
-      </div>
-      <p className="dim">{t('Review what will be signed. Approving signs exactly what is shown here — nothing else.')}</p>
       <div className="payload">
-        {d ? <Rows rows={d.rows} /> : <pre className="pjson">{String(payload.message)}</pre>}
+        {d ? <Rows rows={d.rows} /> : <pre className="pjson">{String(raw)}</pre>}
       </div>
       {d?.warning && <div className="warnbox">{d.warning}</div>}
       <details className="rawbox">
@@ -127,9 +116,59 @@ function ApprovalScreen({ request, origin }) {
         {d?.techRows ? <div className="payload"><Rows rows={d.techRows} /></div> : null}
         <pre className="pjson">{typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2)}</pre>
       </details>
+    </>
+  )
+}
+
+function ApprovalScreen({ request, origin }) {
+  const [busy, setBusy] = useState(false)
+  const { kind, payload } = request
+  const isBatch = kind === 'sign_batch'
+
+  // Decoded from the exact object(s) approveCurrent() will sign — same
+  // references, no re-fetch, nothing dashboard-supplied besides the payload.
+  const items = useMemo(() => {
+    const list = isBatch ? payload.items : [{ kind, payload }]
+    return list.map((it) => ({ kind: it.kind, ...decodeItem(it.kind, it.payload) }))
+  }, [isBatch, kind, payload])
+
+  async function approve() {
+    setBusy(true)
+    try { await approveCurrent() } finally { setBusy(false) }
+  }
+
+  const title = isBatch
+    ? t('Approve {n} actions', { n: items.length })
+    : (items[0].d ? items[0].d.title : t('Signature request'))
+
+  return (
+    <>
+      <h1>{title}</h1>
+      <div className="askedby">
+        <span className="dim">{isBatch ? t('{n} signatures', { n: items.length }) : t(KIND_LABEL[kind] || kind)}</span>
+        {origin ? <span className="mono dim"> · {origin}</span> : null}
+      </div>
+      <p className="dim">
+        {isBatch
+          ? t('These are all the signatures this one action needs. Review each — approving signs exactly what is shown here, in order, and nothing else.')
+          : t('Review what will be signed. Approving signs exactly what is shown here — nothing else.')}
+      </p>
+      {isBatch ? (
+        items.map((it, i) => (
+          <div className="batchitem" key={i}>
+            <div className="batchhead">
+              <span className="batchnum">{i + 1}</span>
+              <span>{it.d ? it.d.title : t(KIND_LABEL[it.kind] || it.kind)}</span>
+            </div>
+            <ItemBody kind={it.kind} d={it.d} raw={it.raw} />
+          </div>
+        ))
+      ) : (
+        <ItemBody kind={items[0].kind} d={items[0].d} raw={items[0].raw} />
+      )}
       <div className="btnrow">
         <button className="primary" disabled={busy} onClick={approve}>
-          {busy ? t('Signing…') : t('Approve & sign')}
+          {busy ? t('Signing…') : isBatch ? t('Approve & sign all') : t('Approve & sign')}
         </button>
         <button className="ghost" disabled={busy} onClick={rejectCurrent}>{t('Reject')}</button>
       </div>

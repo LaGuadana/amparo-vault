@@ -148,3 +148,21 @@ button.ghost:hover:not(:disabled) { color: var(--fg); }
   background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
   white-space: pre-wrap; overflow-wrap: anywhere;
 }
+
+/* batched approval: each signature is its own reviewable block, numbered so
+   the list reads as a sequence rather than one undifferentiated wall. */
+.batchitem {
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 12px 12px; margin-top: 12px; background: var(--bg);
+}
+.batchhead {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 13.5px; font-weight: 600;
+}
+.batchnum {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--bg2); border: 1px solid var(--border);
+  font-size: 11.5px; color: var(--fg-dim);
+}
+.batchitem .payload { background: var(--bg2); }

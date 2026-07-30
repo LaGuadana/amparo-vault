@@ -70,6 +70,11 @@ const es = {
     'Revisa lo que se va a firmar. Al aprobar se firma exactamente lo que se muestra aquí — nada más.',
   Approve: 'Aprobar',
   'Approve & sign': 'Aprobar y firmar',
+  'Approve & sign all': 'Aprobar y firmar todo',
+  'Approve {n} actions': 'Aprobar {n} acciones',
+  '{n} signatures': '{n} firmas',
+  'These are all the signatures this one action needs. Review each — approving signs exactly what is shown here, in order, and nothing else.':
+    'Estas son todas las firmas que necesita esta única acción. Revisa cada una — al aprobar se firma exactamente lo que se muestra aquí, en orden, y nada más.',
   Reject: 'Rechazar',
   'Signing…': 'Firmando…',
   Transaction: 'Transacción',

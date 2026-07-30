@@ -14,6 +14,12 @@ let current = null // {kind, payload, resolve, reject} — never in React state
 
 const fail = (code, message) => Object.assign(new Error(message), { code })
 
+// A batch is a convenience over the single kinds, never a new capability: the
+// most signatures one Approve click may authorize. Kept small so the review
+// screen stays a readable list, not a wall the user rubber-stamps.
+const BATCH_KINDS = new Set(['sign_typed', 'sign_tx', 'sign_message'])
+const MAX_BATCH = 8
+
 // Cheap structural checks so garbage fails fast with a clear code instead of
 // deep inside ethers. Real semantic decoding is the approval UI's job.
 function validate(kind, payload) {
@@ -32,6 +38,22 @@ function validate(kind, payload) {
     const m = payload?.message
     if (typeof m !== 'string' || !m || m.length > 10_000) {
       throw fail('bad_request', 'sign_message needs a non-empty string message (<=10k chars).')
+    }
+  } else if (kind === 'sign_batch') {
+    const items = payload?.items
+    if (!Array.isArray(items) || items.length < 1) {
+      throw fail('bad_request', 'sign_batch needs a non-empty {items: [{kind, payload}, …]}.')
+    }
+    if (items.length > MAX_BATCH) {
+      throw fail('bad_request', `sign_batch is limited to ${MAX_BATCH} items.`)
+    }
+    // Each item is one of the single signing kinds — no nested batches — and
+    // must pass the same structural check as if it had arrived on its own.
+    for (const it of items) {
+      if (!it || !BATCH_KINDS.has(it.kind)) {
+        throw fail('bad_request', 'each sign_batch item must be a sign_tx / sign_typed / sign_message.')
+      }
+      validate(it.kind, it.payload)
     }
   }
 }
@@ -89,11 +111,20 @@ export async function approveCurrent() {
   const { kind, payload, resolve, reject } = current
   if (!session.isUnlocked()) return // UI shouldn't offer Approve yet
   try {
-    // signPayload signs here or in the keeper, whichever holds the key.
-    const result = await session.signPayload(kind, payload)
+    // signPayload signs here or in the keeper, whichever holds the key. A batch
+    // signs each item IN ORDER (later txs may depend on an earlier one's nonce)
+    // and returns {results:[…]} aligned to the items the screen displayed.
+    let result
+    if (kind === 'sign_batch') {
+      const results = []
+      for (const it of payload.items) results.push(await session.signPayload(it.kind, it.payload))
+      result = { results }
+    } else {
+      result = await session.signPayload(kind, payload)
+    }
     current = null
     setRequest(null)
-    resolve(result) // ONLY the signature crosses back — never the key
+    resolve(result) // ONLY the signature(s) cross back — never the key
     scheduleClose()
   } catch (e) {
     current = null
