@@ -32,9 +32,22 @@ function Brand({ phrase }) {
   )
 }
 
-// One-time, non-blocking phrase setup, shown until one is chosen.
+// One-time, non-blocking phrase setup. Collapsed to a single quiet line so it
+// never sits between a first-time user and the actual step (register, code,
+// wallet setup) — expanded, its input was FIRST in the tab order and stole
+// focus/autofill from the primary form. Expands on demand; once a phrase is
+// saved it lives in the brand line and this row disappears for good.
 function PhraseSetup() {
+  const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
+  if (!open) {
+    return (
+      <button type="button" className="phrasehint" onClick={() => setOpen(true)}>
+        <span>{t('Set a security phrase so you can recognize the real vault')}</span>
+        <span className="phrasehint-arrow" aria-hidden="true">›</span>
+      </button>
+    )
+  }
   return (
     <div className="phrasebox">
       <div className="dim">
@@ -44,6 +57,7 @@ function PhraseSetup() {
         <input
           value={value}
           maxLength={40}
+          autoFocus
           placeholder={t('e.g. green teapot')}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && value.trim() && savePhrase(value)}

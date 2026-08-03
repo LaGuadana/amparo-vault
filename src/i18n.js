@@ -156,6 +156,8 @@ const es = {
   'Your security phrase — a window without it is not the real vault.':
     'Tu frase de seguridad — una ventana que no la muestre no es la bóveda auténtica.',
   'e.g. green teapot': 'p. ej. tetera verde',
+  'Set a security phrase so you can recognize the real vault':
+    'Configura una frase de seguridad para reconocer la bóveda real',
   Save: 'Guardar',
 
   // auth (login/register + OTP)
