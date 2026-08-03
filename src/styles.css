@@ -74,6 +74,11 @@ input[type='checkbox']:focus-visible { outline: 2px solid var(--green); outline-
 .check input { margin-top: 2px; flex: none; }
 .check a { color: var(--fg); }
 
+/* date-of-birth segments (day / month / year) */
+.dobrow { display: flex; gap: 8px; }
+.dobrow .dob-d, .dobrow .dob-m { flex: 0 0 64px; text-align: center; }
+.dobrow .dob-y { flex: 1; text-align: center; }
+
 /* buttons */
 .btnrow { display: flex; gap: 10px; margin-top: 18px; }
 .btnrow.spread { justify-content: space-between; }

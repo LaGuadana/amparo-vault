@@ -156,6 +156,12 @@ const es = {
   'Your security phrase — a window without it is not the real vault.':
     'Tu frase de seguridad — una ventana que no la muestre no es la bóveda auténtica.',
   'e.g. green teapot': 'p. ej. tetera verde',
+  DD: 'DD',
+  MM: 'MM',
+  YYYY: 'AAAA',
+  Day: 'Día',
+  Month: 'Mes',
+  Year: 'Año',
   'Set a security phrase so you can recognize the real vault':
     'Configura una frase de seguridad para reconocer la bóveda real',
   Save: 'Guardar',
@@ -173,7 +179,6 @@ const es = {
   'Terms of Service': 'Términos del servicio',
   and: 'y',
   'Privacy Policy': 'Política de privacidad',
-  '— the service is provided as-is, without warranty.': '— el servicio se ofrece tal cual, sin garantía.',
   'I agree': 'Acepto',
   'Create account': 'Crear cuenta',
   'We sent a 6-digit code to {email}.': 'Enviamos un código de 6 dígitos a {email}.',

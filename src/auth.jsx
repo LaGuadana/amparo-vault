@@ -18,7 +18,7 @@ import * as session from './session.js'
 import { refreshSession } from './store.js'
 import { OnboardingFlow } from './onboarding.jsx'
 import { t, getLang } from './i18n.js'
-import { Field, ErrText, Check } from './ui.jsx'
+import { Field, ErrText, Check, DobField } from './ui.jsx'
 
 function TermsModal({ title, text, onAgree, onClose }) {
   return (
@@ -231,13 +231,10 @@ export default function AuthFlow({ payload, onDone, onCancel }) {
           required
         />
         {mode === 'register' && (
-          <Field
+          <DobField
             label={t('Date of birth')}
-            type="date"
-            value={dob}
-            onChange={(e) => setDob(e.target.value)}
+            onChange={setDob}
             hint={t('amparo is for adults only — you must be 18 or older.')}
-            required
           />
         )}
         {mode === 'register' && (
@@ -254,8 +251,7 @@ export default function AuthFlow({ payload, onDone, onCancel }) {
             {t('I have read and agree to the')}{' '}
             <a href="#terms" onClick={(e) => openLegal(e, 'terms')}>{t('Terms of Service')}</a>
             {' '}{t('and')}{' '}
-            <a href="#privacy" onClick={(e) => openLegal(e, 'privacy')}>{t('Privacy Policy')}</a>
-            {' '}{t('— the service is provided as-is, without warranty.')}
+            <a href="#privacy" onClick={(e) => openLegal(e, 'privacy')}>{t('Privacy Policy')}</a>.
           </Check>
         )}
         <ErrText error={err} />

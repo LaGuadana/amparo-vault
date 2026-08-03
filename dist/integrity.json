@@ -5,15 +5,15 @@
     "sha384": "base64 (SRI subresource-integrity form)"
   },
   "files": {
-    "assets/index-C30xyThQ.js": {
-      "sha256": "914df59f67b0d2239d96eee77b6af40c5b96d948ce7da1f8c18dda086f8425af",
-      "sha384": "sha384-Rj6LjdEh/y80M6Cm+OD8O1XBqLSWrs+tTqDJn1TuxNe3RzyOgZfMamE0Fc2HGLuW",
-      "bytes": 398892
+    "assets/index-B4BcNqiL.js": {
+      "sha256": "44aae86aa769941246d7df738be20a5465549d09ec7ba65465d3362c0ada863a",
+      "sha384": "sha384-wh8MBSlWtwAdFDzwVqmS7zRArWNCipGyVk0lUCI1rpfMweVM7qOxobFha5Bd6qWc",
+      "bytes": 399984
     },
-    "assets/index-Cnp5uWHd.css": {
-      "sha256": "9f922035021acd3efcb27196287b2315fd0ad659ffb901018269495ac651a387",
-      "sha384": "sha384-1hcNAsWFd/0vnaBB6f+NPoweA4sJMcmjblH+J/jiAtHCHPG0KOVpf4YYooBR7HUI",
-      "bytes": 7007
+    "assets/index-DmQHGa9v.css": {
+      "sha256": "4dd233156f0f639f6a28e6b6ca8aa22a1e1ecc5ddfecf08ee67d34658c429d57",
+      "sha384": "sha384-AwiehxoxMxFfAoBxPqn/gth4bsR+8g8SW1xtSnU9iV6tw83XtBBvPSnAw8kCHLuF",
+      "bytes": 7138
     },
     "favicon-16.png": {
       "sha256": "f39cd880962ec1dc90482f6430b5dfa3597f9ee319083c6c886ea0ef9ae98de8",
@@ -31,8 +31,8 @@
       "bytes": 507
     },
     "index.html": {
-      "sha256": "0be0c3348d0bcfbed9103f3a05322fcccd0417276ae6f4f44da4fb2e2bd8e4ad",
-      "sha384": "sha384-O5LRhH6Xv6WxHVEdTBJGhyckqnG4evHz7amJMHfSFf7kuZe6ir6eo96o+dl6ZQJU",
+      "sha256": "8bb2e829a159368ae699bfe3fc2c16d02294f83a15a8d4c4ec9a19a2b1c797a9",
+      "sha384": "sha384-ApWim1oYZLSwC316ouGZEDOltTZY00fETgpI6rpTUCeaZUW8zpHtBEdvSD0K9O47",
       "bytes": 1401
     }
   }
